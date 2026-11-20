@@ -71,7 +71,9 @@ def main():
             if keys:
                 show([r.data() for r in records], keys)
             else:
-                print("  " + changed(summary.counters))
+                first = " ".join(stmt.split())
+                first = first if len(first) <= 58 else first[:55] + "..."
+                print(f"  {first}\n    → {changed(summary.counters)}")
 
 
 if __name__ == "__main__":
