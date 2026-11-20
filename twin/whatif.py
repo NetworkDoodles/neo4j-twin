@@ -45,7 +45,7 @@ def broken_now(tx):
     #            -[:TALKS_TO]-> App whose two hosts have no path at all (NOT EXISTS, no none() needed).
     #            Return [(service name, "a -> b :port"), ...], sorted. Run it with tx.run, not a new session: a
     #            new session wouldn't see the change.
-    raise NotImplementedError("TODO 5.2b is still open")
+    return []  # TODO 5.2b (challenge): not done yet
 
 
 def spofs(tx):
