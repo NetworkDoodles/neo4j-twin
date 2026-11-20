@@ -65,6 +65,10 @@ def main():
     started = time.monotonic()
     at = dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
     out = SNAPSHOTS / at.strftime("%Y%m%dT%H%M%SZ")
+    while out.exists():          # two collections in the same second: the second one waits for the next
+        time.sleep(0.2)
+        at = dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
+        out = SNAPSHOTS / at.strftime("%Y%m%dT%H%M%SZ")
     out.mkdir(parents=True, exist_ok=True)
     switches = fabric.mgmt()
     results, failed = {}, {}

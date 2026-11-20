@@ -18,7 +18,7 @@ CALLS = [
     ("path", {"src": "host1", "dst": "host2"}),
     ("cypher", {"query": "MATCH (s:Service)-[:DEPENDS_ON]->(a:App)-[:RUNS_ON]->(h:Host) "
                          "RETURN s.name AS service, a.name AS app, h.name AS host ORDER BY service, app"}),
-    ("cypher", {"query": "MATCH (d:Device {name: $name}) SET d.role = 'hacked' RETURN d.name", "params": {"name": "spine1"}}),
+    ("cypher", {"query": "MATCH (d:Device {name: $name}) SET d.role = 'changed' RETURN d.name", "params": {"name": "spine1"}}),
 ]
 
 
