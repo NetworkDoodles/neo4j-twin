@@ -208,7 +208,7 @@ def t2_1():
     code, out = py("lab/cypher.py", "graph/schema.cypher")
     yield code == 0 and statements("graph/schema.cypher"), "graph/schema.cypher runs"
     code2, out2 = py("lab/cypher.py", "graph/schema.cypher")
-    yield code2 == 0, "and runs again without an error (IF NOT EXISTS)"
+    yield code == 0 and code2 == 0 and statements("graph/schema.cypher"), "and runs again without an error (IF NOT EXISTS)"
     idx = twin.rows("SHOW INDEXES YIELD labelsOrTypes, properties, type, owningConstraint "
                     "WHERE owningConstraint IS NULL AND type = 'RANGE' RETURN labelsOrTypes, properties")
     yield constraint_on("Device", "name") and constraint_on("Interface", "id") and \

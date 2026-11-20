@@ -56,12 +56,12 @@ COMMANDS = {
 
 def collect(name, host):
     """One switch's state: {"lldp": ..., "interfaces": ..., "bgp": ...}, each its command's raw JSON."""
-    if not COMMANDS:
-        raise RuntimeError("COMMANDS is empty: TODO 3.1a")
     return dict(zip(COMMANDS, run_cmds(host, list(COMMANDS.values()))))
 
 
 def main():
+    if not COMMANDS:
+        sys.exit("COMMANDS is empty: TODO 3.1a is still open")
     started = time.monotonic()
     at = dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
     out = SNAPSHOTS / at.strftime("%Y%m%dT%H%M%SZ")
@@ -78,6 +78,11 @@ def main():
                 raise
             except Exception as e:  # one switch not answering shouldn't lose the other five
                 failed[name] = f"{type(e).__name__}: {e}"
+    if not results:      # nothing to keep: don't leave an empty snapshot to be loaded as the newest
+        out.rmdir()
+        for name, why in sorted(failed.items()):
+            print(f"  ✗ {name}: {why}")
+        return 1
     for name, state in results.items():
         (out / f"{name}.json").write_text(json.dumps(state, indent=1, sort_keys=True))
     seconds = round(time.monotonic() - started, 2)
