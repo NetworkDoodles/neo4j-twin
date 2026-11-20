@@ -5,3 +5,13 @@
 // Host. A flow is broken by $device if every path between its two hosts goes through $device: in Cypher, there
 // is NOT EXISTS a path (the same three relationship types as task 4.1) where none() of the nodes is that device.
 // Columns: service, tier, flow ("web-shop -> orders-db :5432"), sorted by tier, service, flow.
+// >>> solution
+MATCH (s:Service)-[:DEPENDS_ON]->(a:App)-[f:TALKS_TO]->(b:App),
+      (a)-[:RUNS_ON]->(ha:Host), (b)-[:RUNS_ON]->(hb:Host)
+WHERE NOT EXISTS {
+  MATCH p = (ha)-[:ATTACHED_TO|HAS_INTERFACE|CABLED_TO*]-(hb)
+  WHERE none(n IN nodes(p) WHERE n:Device AND n.name = $device)
+}
+RETURN s.name AS service, s.tier AS tier, a.name + " -> " + b.name + " :" + f.port AS flow
+ORDER BY tier, service, flow;
+// <<< solution

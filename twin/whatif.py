@@ -36,7 +36,19 @@ def apply(tx, change):
     #            change.get("drain", []): every CABLED_TO on an interface of a device in the list.
     #            Return the total number deleted: .consume().counters.relationships_deleted on each result.
     #            Delete only CABLED_TO, never a node: the change is to the cabling, and the rollback undoes it anyway.
-    raise NotImplementedError("TODO 5.2a is still open")
+    # >>> solution
+    gone = tx.run("""
+        MATCH (a:Interface)-[r:CABLED_TO]-(:Interface)
+        WHERE a.id IN $ids
+        DELETE r
+    """, ids=change.get("remove_links", [])).consume().counters.relationships_deleted
+    gone += tx.run("""
+        MATCH (d:Device)-[:HAS_INTERFACE]->(:Interface)-[r:CABLED_TO]-(:Interface)
+        WHERE d.name IN $devices
+        DELETE r
+    """, devices=change.get("drain", [])).consume().counters.relationships_deleted
+    return gone
+    # <<< solution
 
 
 def broken_now(tx):
@@ -45,7 +57,15 @@ def broken_now(tx):
     #            -[:TALKS_TO]-> App whose two hosts have no path at all (NOT EXISTS, no none() needed).
     #            Return [(service name, "a -> b :port"), ...], sorted. Run it with tx.run, not a new session: a
     #            new session wouldn't see the change.
-    raise NotImplementedError("TODO 5.2b is still open")
+    # >>> solution
+    return [(r["service"], r["flow"]) for r in tx.run("""
+        MATCH (s:Service)-[:DEPENDS_ON]->(a:App)-[f:TALKS_TO]->(b:App),
+              (a)-[:RUNS_ON]->(ha:Host), (b)-[:RUNS_ON]->(hb:Host)
+        WHERE NOT EXISTS { (ha)-[:ATTACHED_TO|HAS_INTERFACE|CABLED_TO*]-(hb) }
+        RETURN s.name AS service, a.name + " -> " + b.name + " :" + f.port AS flow
+        ORDER BY service, flow
+    """)]
+    # <<< solution
 
 
 def spofs(tx):
