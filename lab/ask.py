@@ -32,6 +32,9 @@ async def ask(calls=CALLS):
         tools = [t.name for t in await c.list_tools()]
         out.append(("tools", tools))
         for name, args in calls:
+            if name not in tools:
+                out.append((name, args, "error", f"the server has no {name} tool yet"))
+                continue
             r = await c.call_tool(name, args, raise_on_error=False)
             if r.is_error:
                 out.append((name, args, "error", " ".join(b.text for b in r.content if hasattr(b, "text"))))
