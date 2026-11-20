@@ -77,8 +77,10 @@ make refresh       # collect from the switches, load it, and say what changed
 make break X=link  # break the fabric on purpose; make fix puts it back
 ```
 
-Neo4j's browser is at http://localhost:7474 (user `neo4j`, password `lab-twin-graph`). In Codespaces, open it
-from the **Ports** tab. These are lab credentials, never real ones.
+Neo4j's browser is at http://localhost:7474 (user `neo4j`, password `lab-twin-graph`). It needs both 7474 and
+7687 on localhost: on a laptop or in VS Code desktop that's automatic; for a codespace in a web browser, run
+`gh codespace ports forward 7474:7474 7687:7687` on your own machine. Don't make the ports public. Every task also
+works without it (`make shell`, `make cypher`). These are lab credentials, never real ones.
 
 ## License
 
