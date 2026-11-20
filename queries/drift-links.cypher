@@ -6,3 +6,9 @@
 // true when there's no such relationship.
 // Columns: cabled (a's id), to (b's id), a_status and b_status (each end's oper_status), sorted by cabled.
 // A healthy fabric returns no rows.
+// >>> solution
+MATCH (a:Interface)-[:CABLED_TO]->(b:Interface)
+WHERE NOT (a)-[:LLDP_NEIGHBOR]->(b) OR NOT (b)-[:LLDP_NEIGHBOR]->(a)
+RETURN a.id AS cabled, b.id AS to, a.oper_status AS a_status, b.oper_status AS b_status
+ORDER BY cabled;
+// <<< solution

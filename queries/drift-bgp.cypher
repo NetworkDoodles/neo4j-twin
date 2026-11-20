@@ -7,3 +7,11 @@
 // missing row), and keep the ones that are missing or not "Established".
 // Columns: device, peer, state ("missing" when there's no BGP_PEER: coalesce() helps), last_up (its last_seen),
 // sorted by device, then peer. A healthy fabric returns no rows.
+// >>> solution
+MATCH (d:Device)-[:HAS_INTERFACE]->(:Interface)-[:CABLED_TO]-(:Interface)<-[:HAS_INTERFACE]-(p:Device)
+OPTIONAL MATCH (d)-[r:BGP_PEER]->(p)
+WITH d, p, r
+WHERE r IS NULL OR r.state <> "Established"
+RETURN d.name AS device, p.name AS peer, coalesce(r.state, "missing") AS state, r.last_seen AS last_up
+ORDER BY device, peer;
+// <<< solution

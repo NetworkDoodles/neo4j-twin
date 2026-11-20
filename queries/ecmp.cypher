@@ -5,3 +5,10 @@
 // spine/leaf fabric, one per spine, which is ECMP (equal-cost multipath) seen from the cabling.
 // Return two columns: paths (how many) and via (the spine each one goes through, in order: ORDER BY before
 // collect() sorts the list).
+// >>> solution
+MATCH (a:Host {name: $from}), (b:Host {name: $to})
+MATCH p = allShortestPaths((a)-[:ATTACHED_TO|HAS_INTERFACE|CABLED_TO*]-(b))
+WITH p, [n IN nodes(p) WHERE n:Device AND n.role = "spine" | n.name][0] AS spine
+ORDER BY spine
+RETURN count(p) AS paths, collect(spine) AS via;
+// <<< solution
