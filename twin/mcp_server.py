@@ -50,7 +50,17 @@ def read(text, params=None, limit=MAX_ROWS):
     #            function gets a timeout.
     #            A Neo4jError (a refused write, a syntax error, a timeout) becomes ToolError(e.message), which the
     #            agent sees as the tool's error instead of the server crashing.
-    raise NotImplementedError("TODO 6.2a is still open")
+    # >>> solution
+    @unit_of_work(timeout=TIMEOUT)
+    def work(tx):
+        result = tx.run(text, params or {})
+        return [r.data() for r in result.fetch(limit)]
+    try:
+        with twin.driver() as d, d.session() as s:
+            return s.execute_read(work)
+    except Neo4jError as e:
+        raise ToolError(e.message) from e
+    # <<< solution
 
 
 @mcp.tool
@@ -69,7 +79,16 @@ def path(src: str, dst: str) -> list[dict]:
 #            with @mcp.tool like the two above, that runs the agent's own query through read(). Its docstring is
 #            what the agent reads to decide how to use it: say it's read-only, name the labels and relationship
 #            types it can use, and the row limit.
-# TODO 6.2b (challenge): the cypher tool goes here
+# >>> solution | # TODO 6.2b (challenge): the cypher tool goes here
+@mcp.tool
+def cypher(query: str, params: dict | None = None) -> list[dict]:
+    """Run your own read-only Cypher query against the graph twin. At most 100 rows; writes are refused.
+    Labels: Site, Device, Interface, Subnet, Host, App, Service. Relationships: LOCATED_IN, HAS_INTERFACE,
+    CABLED_TO (intended cabling), IN_SUBNET, ATTACHED_TO (host to leaf port), RUNS_ON, TALKS_TO {port, proto},
+    DEPENDS_ON, LLDP_NEIGHBOR {seen_at} and BGP_PEER {state, prefixes, seen_at, last_seen} (observed).
+    Pass values as params ($name in the query), not pasted into it."""
+    return read(query, params)
+# <<< solution
 
 
 if __name__ == "__main__":

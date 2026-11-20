@@ -27,7 +27,13 @@ def lldp_changes(old, new):
     # TODO 6.1a  (follow along) Turn each snapshot's LLDP into a set of strings, one per neighbor a switch reports:
     #            f"{switch}:{n['port']} -> {n['neighborDevice']}:{n['neighborPort']}" for every n in
     #            state[switch]["lldp"]["lldpNeighbors"]. Then gone is old minus new, appeared is new minus old.
-    raise NotImplementedError("TODO 6.1a is still open")
+    # >>> solution
+    def facts(s):
+        return {f"{sw}:{n['port']} -> {n['neighborDevice']}:{n['neighborPort']}"
+                for sw, st in s.items() for n in st.get("lldp", {}).get("lldpNeighbors", [])}
+    a, b = facts(old), facts(new)
+    return sorted(a - b), sorted(b - a)
+    # <<< solution
 
 
 def bgp_changes(old, new):
@@ -36,7 +42,14 @@ def bgp_changes(old, new):
     (the peer's name) if it has one, otherwise its address."""
     # TODO 6.1b  (challenge) Build {(switch, peer): state} for each snapshot from
     #            state[switch]["bgp"]["vrfs"][vrf]["peers"][address] (peerState, description), then compare.
-    return []  # TODO 6.1b (challenge): not done yet
+    # >>> solution | return []  # TODO 6.1b (challenge): not done yet
+    def facts(s):
+        return {(sw, p.get("description") or ip): p["peerState"]
+                for sw, st in s.items() for vrf in st.get("bgp", {}).get("vrfs", {}).values() for ip, p in vrf["peers"].items()}
+    a, b = facts(old), facts(new)
+    return sorted((sw, peer, a.get((sw, peer), "missing"), b.get((sw, peer), "missing"))
+                  for sw, peer in set(a) | set(b) if a.get((sw, peer)) != b.get((sw, peer)))
+    # <<< solution
 
 
 def main(older=None, newer=None):
