@@ -54,7 +54,19 @@ def load_lldp(tx, data, at):
     #            observed_at = $at. A port the intent doesn't have (Management0) has no node, so MATCH skips it.
     #            data["lldp"] ({from, to}, two interface ids): MATCH both interfaces, MERGE
     #            (from)-[r:LLDP_NEIGHBOR]->(to), and SET r.seen_at = $at.
-    raise NotImplementedError("TODO 3.2a is still open")
+    # >>> solution
+    tx.run("""
+        UNWIND $rows AS row
+        MATCH (i:Interface {id: row.id})
+        SET i.oper_status = row.status, i.observed_at = $at
+    """, rows=data["interfaces"], at=at)
+    tx.run("""
+        UNWIND $rows AS row
+        MATCH (a:Interface {id: row.from}), (b:Interface {id: row.to})
+        MERGE (a)-[r:LLDP_NEIGHBOR]->(b)
+        SET r.seen_at = $at
+    """, rows=data["lldp"], at=at)
+    # <<< solution
 
 
 def load_bgp(tx, data, at):
@@ -65,7 +77,17 @@ def load_bgp(tx, data, at):
     #            MERGE (device)-[r:BGP_PEER]->(peer) and SET state, prefixes and seen_at = $at. last_seen is the last
     #            time the session was Established: $at if it is now, otherwise leave it as it was
     #            (CASE WHEN ... THEN $at ELSE r.last_seen END).
-    pass  # TODO 3.2b (challenge): not done yet
+    # >>> solution | pass  # TODO 3.2b (challenge): not done yet
+    tx.run("""
+        UNWIND $rows AS row
+        MATCH (d:Device {name: row.device})
+        MATCH (p:Device)-[:HAS_INTERFACE]->(i:Interface)
+        WHERE split(i.ip, "/")[0] = row.peer_ip
+        MERGE (d)-[r:BGP_PEER]->(p)
+        SET r.state = row.state, r.prefixes = row.prefixes, r.seen_at = $at,
+            r.last_seen = CASE WHEN row.state = "Established" THEN $at ELSE r.last_seen END
+    """, rows=data["bgp"], at=at)
+    # <<< solution
 
 
 def prune(tx, switches, at):

@@ -41,7 +41,16 @@ def run_cmds(host, cmds):
     #               "params": {"version": 1, "cmds": cmds, "format": "json"}}
     #            The reply is {"jsonrpc": "2.0", "id": 1, "result": [one dict per command]}, or "error" instead of
     #            "result" if a command failed: raise RuntimeError with the error's message then.
-    raise NotImplementedError("TODO 3.1a is still open")
+    # >>> solution
+    body = {"jsonrpc": "2.0", "method": "runCmds", "id": 1,
+            "params": {"version": 1, "cmds": cmds, "format": "json"}}
+    r = httpx.post(f"https://{host}/command-api", json=body, auth=(USER, PASSWORD), verify=False, timeout=10)
+    r.raise_for_status()
+    reply = r.json()
+    if "error" in reply:
+        raise RuntimeError(reply["error"].get("message", reply["error"]))
+    return reply["result"]
+    # <<< solution
 
 
 # What to ask every switch for, and the name each answer is kept under in the snapshot.
@@ -49,8 +58,13 @@ def run_cmds(host, cmds):
 #            "show interfaces status".
 # TODO 3.1b  (challenge) One more: "bgp", for the BGP sessions. Which show command lists them, with their state?
 COMMANDS = {
-    # TODO 3.1a: "lldp" and "interfaces"
-    # TODO 3.1b: "bgp"
+    # >>> solution | # TODO 3.1a: "lldp" and "interfaces"
+    "lldp": "show lldp neighbors",
+    "interfaces": "show interfaces status",
+    # <<< solution
+    # >>> solution | # TODO 3.1b: "bgp"
+    "bgp": "show ip bgp summary",
+    # <<< solution
 }
 
 
