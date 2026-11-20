@@ -57,7 +57,7 @@ def broken_now(tx):
     #            -[:TALKS_TO]-> App whose two hosts have no path at all (NOT EXISTS, no none() needed).
     #            Return [(service name, "a -> b :port"), ...], sorted. Run it with tx.run, not a new session: a
     #            new session wouldn't see the change.
-    # >>> solution
+    # >>> solution | return []  # TODO 5.2b (challenge): not done yet
     return [(r["service"], r["flow"]) for r in tx.run("""
         MATCH (s:Service)-[:DEPENDS_ON]->(a:App)-[f:TALKS_TO]->(b:App),
               (a)-[:RUNS_ON]->(ha:Host), (b)-[:RUNS_ON]->(hb:Host)
