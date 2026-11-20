@@ -60,7 +60,10 @@ def main(older=None, newer=None):
         if len(pair) < 2:
             return print("  only one snapshot so far: nothing to compare yet")
     (t_new, new), (t_old, old) = state(pair[0]), state(pair[1])
-    gone, appeared = lldp_changes(old, new)
+    try:
+        gone, appeared = lldp_changes(old, new)
+    except NotImplementedError:      # make refresh runs this from chapter 3 on; it's written in chapter 6
+        return print("  (what changed since last time: that's task 6.1)")
     bgp = bgp_changes(old, new)
     print(f"  changes from {t_old} to {t_new}:")
     for g in gone:
