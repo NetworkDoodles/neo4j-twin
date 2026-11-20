@@ -10,4 +10,21 @@ MATCH (n) DETACH DELETE n;
 
 CREATE
     (spine1:Device {name: "spine1", role: "spine", asn: 65000})
+  // >>> solution
+  , (spine2:Device {name: "spine2", role: "spine", asn: 65000})
+  , (leaf1:Device {name: "leaf1", role: "leaf", asn: 65001})
+  , (leaf1)-[:LINK]->(spine1)
+  , (leaf1)-[:LINK]->(spine2)
+  // <<< solution
+  // >>> solution
+  , (leaf2:Device {name: "leaf2", role: "leaf", asn: 65002})
+  , (leaf3:Device {name: "leaf3", role: "leaf", asn: 65003})
+  , (leaf4:Device {name: "leaf4", role: "leaf", asn: 65004})
+  , (leaf2)-[:LINK]->(spine1)
+  , (leaf2)-[:LINK]->(spine2)
+  , (leaf3)-[:LINK]->(spine1)
+  , (leaf3)-[:LINK]->(spine2)
+  , (leaf4)-[:LINK]->(spine1)
+  , (leaf4)-[:LINK]->(spine2)
+  // <<< solution
 ;
