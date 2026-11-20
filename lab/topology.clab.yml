@@ -1,0 +1,100 @@
+# The lab, in containerlab: a small spine/leaf fabric of CapeOS Pulse switches (an EOS-style lab NOS with a
+# JSON-RPC command API, which is where chapter 3's collector reads the network's state), eBGP between every
+# leaf and both spines, and one host behind each leaf. fabric/intent.yml describes it; lab/render.py writes
+# the switches' configs. Neo4j, the graph twin, runs next to it (docker-compose.yml).
+#
+#            ┌────────┐            ┌────────┐
+#            │ spine1 │            │ spine2 │        AS 65000
+#            └┬─┬──┬─┬┘            └┬─┬──┬─┬┘
+#     ┌───────┘ │  │ └──────┐  (and the same four links from spine2)
+#  ┌──┴───┐ ┌───┴──┐ ┌┴─────┐ ┌──────┴┐
+#  │leaf1 │ │leaf2 │ │leaf3 │ │leaf4  │                 AS 65001 .. 65004
+#  └──┬───┘ └──┬───┘ └──┬───┘ └───┬───┘
+#   host1    host3    host4     host2
+#
+# containerlab names ports by their Linux names (eth1); the switches call the same port Ethernet1.
+name: twin
+prefix: ""                          # containers are named after the nodes
+
+mgmt:
+  network: twin-mgmt
+  ipv4-subnet: 172.80.91.0/24
+
+topology:
+  defaults:
+    kind: linux
+  kinds:
+    linux:
+      image: alpine:3.22
+
+  nodes:
+    # Each switch boots from a copy of its config in build/startup/ (`make up` renders them from
+    # fabric/intent.yml), so nothing you do on a switch changes a file Git tracks.
+    spine1: &pulse
+      image: ghcr.io/dkhenderson2/capeos-pulse:0.11.2
+      mgmt-ipv4: 172.80.91.11
+      env: { CAPEOS_USER: admin, CAPEOS_PASSWORD: capeos-lab }
+      binds: [../build/startup/spine1.cfg:/flash/startup-config]
+    spine2:
+      <<: *pulse
+      mgmt-ipv4: 172.80.91.12
+      binds: [../build/startup/spine2.cfg:/flash/startup-config]
+    leaf1:
+      <<: *pulse
+      mgmt-ipv4: 172.80.91.21
+      binds: [../build/startup/leaf1.cfg:/flash/startup-config]
+    leaf2:
+      <<: *pulse
+      mgmt-ipv4: 172.80.91.22
+      binds: [../build/startup/leaf2.cfg:/flash/startup-config]
+    leaf3:
+      <<: *pulse
+      mgmt-ipv4: 172.80.91.23
+      binds: [../build/startup/leaf3.cfg:/flash/startup-config]
+    leaf4:
+      <<: *pulse
+      mgmt-ipv4: 172.80.91.24
+      binds: [../build/startup/leaf4.cfg:/flash/startup-config]
+
+    host1: &host
+      mgmt-ipv4: 172.80.91.31
+      exec:
+        - ip addr add 10.10.1.10/24 dev eth1
+        - ip link set eth1 up
+        - ip route add 10.0.0.0/8 via 10.10.1.1
+      labels: { graph-icon: server, graph-level: "3" }
+    host2:
+      <<: *host
+      mgmt-ipv4: 172.80.91.32
+      exec:
+        - ip addr add 10.10.4.10/24 dev eth1
+        - ip link set eth1 up
+        - ip route add 10.0.0.0/8 via 10.10.4.1
+    host3:
+      <<: *host
+      mgmt-ipv4: 172.80.91.33
+      exec:
+        - ip addr add 10.10.2.10/24 dev eth1
+        - ip link set eth1 up
+        - ip route add 10.0.0.0/8 via 10.10.2.1
+    host4:
+      <<: *host
+      mgmt-ipv4: 172.80.91.34
+      exec:
+        - ip addr add 10.10.3.10/24 dev eth1
+        - ip link set eth1 up
+        - ip route add 10.0.0.0/8 via 10.10.3.1
+
+  links:
+    - endpoints: ["spine1:eth1", "leaf1:eth1"]
+    - endpoints: ["spine1:eth2", "leaf2:eth1"]
+    - endpoints: ["spine1:eth3", "leaf3:eth1"]
+    - endpoints: ["spine1:eth4", "leaf4:eth1"]
+    - endpoints: ["spine2:eth1", "leaf1:eth2"]
+    - endpoints: ["spine2:eth2", "leaf2:eth2"]
+    - endpoints: ["spine2:eth3", "leaf3:eth2"]
+    - endpoints: ["spine2:eth4", "leaf4:eth2"]
+    - endpoints: ["leaf1:eth3", "host1:eth1"]
+    - endpoints: ["leaf2:eth3", "host3:eth1"]
+    - endpoints: ["leaf3:eth3", "host4:eth1"]
+    - endpoints: ["leaf4:eth3", "host2:eth1"]

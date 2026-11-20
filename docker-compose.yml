@@ -1,0 +1,18 @@
+# Neo4j, the graph twin. `make up` starts it with the switches: every chapter uses it.
+# Neo4j's browser: http://localhost:7474 (user neo4j, password lab-twin-graph). Lab credentials only.
+services:
+  neo4j:
+    image: neo4j:5.26.32-community
+    container_name: neo4j
+    ports: ["127.0.0.1:7474:7474", "127.0.0.1:7687:7687"]
+    environment:
+      NEO4J_AUTH: neo4j/lab-twin-graph
+      NEO4J_server_memory_heap_max__size: 512m
+      NEO4J_server_memory_pagecache_size: 128m
+      # chapter 6: a query that runs longer than this is stopped by the server, whoever sent it
+      NEO4J_db_transaction_timeout: 30s
+    volumes: ["neo4j-data:/data"]
+    mem_limit: 1g
+    restart: unless-stopped
+volumes:
+  neo4j-data:

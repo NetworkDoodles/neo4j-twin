@@ -1,0 +1,64 @@
+{
+  // Network Doodles lab environment · Graph digital twins with Neo4j.
+  // Everything runs inside this one container: its own Docker engine (the switches live in there),
+  // containerlab, Neo4j, Python, and a browser IDE.
+  //
+  //   Codespaces  the badge in the README: nothing to install
+  //   VS Code     "Dev Containers: Reopen in Container"
+  //   Browser     devcontainer up, then http://localhost:13337 (code-server)
+  "name": "Network Doodles · Graph digital twins with Neo4j",
+  "build": { "dockerfile": "Dockerfile", "context": ".." },
+  "privileged": true,
+  // The inner Docker keeps its images on a volume: on the container's own overlay filesystem it can't use
+  // overlay2 and falls back to vfs, a full copy of every image layer (tens of GB).
+  "mounts": ["source=dind-var-lib-docker-${devcontainerId},target=/var/lib/docker,type=volume"],
+  "remoteUser": "vscode",
+  "hostRequirements": { "cpus": 4, "memory": "8gb" },
+  "containerEnv": {
+    // The lab switches' and the lab graph's credentials, for twin/collect.py and lib/twin.py. Lab only: real
+    // ones come from a vault or your own shell.
+    "SWITCH_USERNAME": "admin",
+    "SWITCH_PASSWORD": "capeos-lab",
+    "NEO4J_URI": "bolt://localhost:7687",
+    "NEO4J_PASSWORD": "lab-twin-graph"
+  },
+
+  "features": {
+    "ghcr.io/coder/devcontainer-features/code-server:2": {
+      "host": "0.0.0.0",
+      "port": "13337",
+      "auth": "none",
+      "workspace": "/workspaces/${localWorkspaceFolderBasename}",
+      "disableTelemetry": true,
+      "disableUpdateCheck": true,
+      "extensions": "srl-labs.vscode-containerlab,redhat.vscode-yaml,ms-python.python"
+    }
+  },
+
+  // code-server has no password, so it is only ever published on this machine's loopback.
+  "appPort": ["127.0.0.1:13337:13337"],
+  // Neo4j's browser (7474) draws the graph; it talks to the database on 7687 (bolt), so both are forwarded.
+  "forwardPorts": [13337, 7474, 7687],
+  "portsAttributes": {
+    "13337": { "label": "code-server (browser IDE)", "onAutoForward": "silent" },
+    "7474": { "label": "Neo4j browser", "onAutoForward": "notify" },
+    "7687": { "label": "Neo4j (bolt)", "onAutoForward": "silent" }
+  },
+
+  // Once, when the container is created: the switch and Neo4j images, inside this container's own Docker.
+  "postCreateCommand": "make setup images",
+  // Every start: the fabric and Neo4j.
+  "postStartCommand": "make up",
+
+  "customizations": {
+    "vscode": {
+      "extensions": ["srl-labs.vscode-containerlab", "redhat.vscode-yaml", "ms-python.python"],
+      "settings": {
+        "task.allowAutomaticTasks": "on",
+        "python.defaultInterpreterPath": "/home/vscode/.venvs/lab/bin/python",
+        "python.useEnvironmentsExtension": false,
+        "terminal.integrated.defaultProfile.linux": "zsh"
+      }
+    }
+  }
+}

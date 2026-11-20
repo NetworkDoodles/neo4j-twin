@@ -1,0 +1,43 @@
+{# Lab infrastructure: one switch's factory config, rendered from fabric/intent.yml by lab/render.py. #}
+hostname {{ name }}
+ip routing
+!
+interface Management0
+   description oob management
+!
+{% for port, i in ports | dictsort %}
+interface {{ port }}
+   description {{ i.peer }}:{{ i.peer_port }}
+   no switchport
+   mtu {{ mtu }}
+   ip address {{ i.address }}
+!
+{% endfor %}
+{% for h in dev.hosts | default([]) %}
+interface {{ h.port }}
+   description {{ h.host }}:eth1
+   no switchport
+   mtu {{ mtu }}
+   ip address {{ h.gateway }}/{{ h.subnet.split('/')[1] }}
+!
+{% endfor %}
+interface Loopback0
+   description router-id
+   ip address {{ dev.loopback }}/32
+!
+router bgp {{ asn }}
+   router-id {{ dev.loopback }}
+   maximum-paths 4
+{% for port, i in ports | dictsort %}
+   neighbor {{ i.peer_ip }} remote-as {{ peer_asn[i.peer] }}
+   neighbor {{ i.peer_ip }} description {{ i.peer }}
+{% endfor %}
+   network {{ dev.loopback }}/32
+{% for h in dev.hosts | default([]) %}
+   network {{ h.subnet }}
+{% endfor %}
+!
+management api http-commands
+   no shutdown
+!
+end

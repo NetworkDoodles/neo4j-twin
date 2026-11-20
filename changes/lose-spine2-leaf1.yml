@@ -1,0 +1,4 @@
+# The cable between spine2 and leaf1 fails, or is taken out for maintenance. Nothing breaks: leaf1 still has
+# spine1. The question is what it does to everything else.
+description: "lose the spine2-leaf1 link"
+remove_links: [spine2:Ethernet1]     # an interface at either end of each link

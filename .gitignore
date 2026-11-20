@@ -1,0 +1,8 @@
+# made by the lab, never committed
+build/
+.venv/
+__pycache__/
+.pytest_cache/
+# containerlab's own state for a running lab (it includes a CA key)
+lab/clab-*/
+clab-*/

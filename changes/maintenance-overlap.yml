@@ -1,0 +1,5 @@
+# Two pieces of work booked for the same night: spine1's upgrade, and a cable swap between spine2 and leaf1.
+# Each is safe on its own.
+description: "drain spine1 while the spine2-leaf1 link is out"
+drain: [spine1]
+remove_links: [spine2:Ethernet1]

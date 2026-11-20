@@ -1,0 +1,3 @@
+# Take spine1 out of service for an upgrade: every one of its links goes.
+description: "drain spine1"
+drain: [spine1]

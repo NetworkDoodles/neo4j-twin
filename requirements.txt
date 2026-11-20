@@ -1,0 +1,11 @@
+# The lab's Python tools. The dev container bakes these into its image.
+# the Neo4j driver: every chapter talks to the graph through it
+neo4j==6.4.1
+# chapter 3: the switches' JSON-RPC command API
+httpx==0.28.1
+# chapter 6: the read-only MCP server over the graph
+fastmcp==4.2.2
+# fabric/intent.yml and fabric/services.yml; lab/render.py renders the startup configs
+pyyaml==6.0.3
+jinja2==3.1.6
+pytest==9.2.0

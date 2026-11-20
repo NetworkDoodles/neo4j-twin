@@ -1,0 +1,23 @@
+# What runs on the fabric, and who depends on it. A switch failing is a network fact; "online orders are down"
+# is the business fact people actually ask about. This file is the bridge: twin/load_intent.py loads it into the
+# graph in chapter 2, and chapter 5's blast radius walks from a switch all the way up to these services.
+#
+#   apps      run on a host
+#   flows     one app talks to another, on a port and protocol
+#   services  what the business calls it, who owns it, how much it matters (tier 1 is the most), and the
+#             apps it needs
+
+apps:
+  web-shop:  {host: host2}
+  orders-db: {host: host1}
+  payments:  {host: host4}
+  netmon:    {host: host3}
+
+flows:
+  - {from: web-shop, to: orders-db, port: 5432, proto: tcp}
+  - {from: web-shop, to: payments,  port: 443,  proto: tcp}
+  - {from: netmon,   to: web-shop,  port: 443,  proto: tcp}   # synthetic checks of the shop
+
+services:
+  online-orders:      {name: "Online orders",      owner: ecommerce, tier: 1, needs: [web-shop, orders-db, payments]}
+  network-monitoring: {name: "Network monitoring", owner: netops,    tier: 3, needs: [netmon]}
