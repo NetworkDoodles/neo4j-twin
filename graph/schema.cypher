@@ -10,3 +10,15 @@
 //            Interface's device, for "every interface on leaf1".
 // TODO 2.1b  (challenge) one uniqueness constraint each for Site, Subnet, Host, App and Service. Which property
 //            names each one? The table in the guide says.
+// >>> solution
+CREATE CONSTRAINT device_name IF NOT EXISTS FOR (d:Device) REQUIRE d.name IS UNIQUE;
+CREATE CONSTRAINT interface_id IF NOT EXISTS FOR (i:Interface) REQUIRE i.id IS UNIQUE;
+CREATE INDEX interface_device IF NOT EXISTS FOR (i:Interface) ON (i.device);
+// <<< solution
+// >>> solution
+CREATE CONSTRAINT site_name IF NOT EXISTS FOR (s:Site) REQUIRE s.name IS UNIQUE;
+CREATE CONSTRAINT subnet_prefix IF NOT EXISTS FOR (s:Subnet) REQUIRE s.prefix IS UNIQUE;
+CREATE CONSTRAINT host_name IF NOT EXISTS FOR (h:Host) REQUIRE h.name IS UNIQUE;
+CREATE CONSTRAINT app_name IF NOT EXISTS FOR (a:App) REQUIRE a.name IS UNIQUE;
+CREATE CONSTRAINT service_name IF NOT EXISTS FOR (s:Service) REQUIRE s.name IS UNIQUE;
+// <<< solution

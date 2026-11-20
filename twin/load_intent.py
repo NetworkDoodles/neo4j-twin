@@ -65,7 +65,22 @@ def load_network(tx, data):
     #            (interface)-[:IN_SUBNET]->(:Subnet {prefix}).
     #            Then for each row in data["links"] ({a, b}, two interface ids): MATCH both interfaces and MERGE
     #            one CABLED_TO from a to b.
-    raise NotImplementedError("TODO 2.2a is still open")
+    # >>> solution
+    tx.run("""
+        UNWIND $rows AS i
+        MATCH (d:Device {name: i.device})
+        MERGE (n:Interface {id: i.id})
+        SET n.device = i.device, n.name = i.name, n.ip = i.ip
+        MERGE (d)-[:HAS_INTERFACE]->(n)
+        MERGE (s:Subnet {prefix: i.subnet})
+        MERGE (n)-[:IN_SUBNET]->(s)
+    """, rows=data["interfaces"])
+    tx.run("""
+        UNWIND $rows AS l
+        MATCH (a:Interface {id: l.a}), (b:Interface {id: l.b})
+        MERGE (a)-[:CABLED_TO]->(b)
+    """, rows=data["links"])
+    # <<< solution
 
 
 def load_services(tx, data):
@@ -76,7 +91,36 @@ def load_services(tx, data):
     #            flows    {from, to, port, proto}: (a)-[:TALKS_TO {port}]->(b), with proto SET on it
     #            services {key, name, owner, tier, needs}: MERGE (:Service {name}), SET key, owner and tier, and one
     #                     DEPENDS_ON to each app in needs (UNWIND s.needs inside the same query)
-    pass  # TODO 2.2b (challenge): not done yet
+    # >>> solution | pass  # TODO 2.2b (challenge): not done yet
+    tx.run("""
+        UNWIND $rows AS h
+        MATCH (port:Interface {id: h.port})
+        MERGE (n:Host {name: h.name})
+        SET n.ip = h.ip
+        MERGE (n)-[:ATTACHED_TO]->(port)
+    """, rows=data["hosts"])
+    tx.run("""
+        UNWIND $rows AS a
+        MATCH (h:Host {name: a.host})
+        MERGE (n:App {name: a.name})
+        MERGE (n)-[:RUNS_ON]->(h)
+    """, rows=data["apps"])
+    tx.run("""
+        UNWIND $rows AS f
+        MATCH (a:App {name: f.from}), (b:App {name: f.to})
+        MERGE (a)-[t:TALKS_TO {port: f.port}]->(b)
+        SET t.proto = f.proto
+    """, rows=data["flows"])
+    tx.run("""
+        UNWIND $rows AS s
+        MERGE (n:Service {name: s.name})
+        SET n.key = s.key, n.owner = s.owner, n.tier = s.tier
+        WITH n, s
+        UNWIND s.needs AS need
+        MATCH (a:App {name: need})
+        MERGE (n)-[:DEPENDS_ON]->(a)
+    """, rows=data["services"])
+    # <<< solution
 
 
 def main(intent_path=fabric.INTENT, services_path=SERVICES):
